@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/binary"
 	"flag"
 	"fmt"
 	"log"
@@ -15,9 +14,23 @@ import (
 func logCANFrame(frm can.Frame) {
 	data := trimSuffix(frm.Data[:], 0x00)
 	length := fmt.Sprintf("[%x]", frm.Length)
-	log.Printf("%-3s %-4x %-3s % -24X '%s'\n", *i, frm.ID, length, data, printableString(data[:]))
 
-	logElster(frm, data)
+	chars := fmt.Sprintf("'%s'", printableString(data[:]))
+	rcvr := ReceiverId(frm.Data[:2])
+	formatted := fmt.Sprintf("%-3s %-4x %-3s % -24X %-10s %-4x", *i, frm.ID, length, data, chars, rcvr)
+
+	if len(data) > 0 {
+		reg, payload := Payload(data)
+
+		if r := Reading(reg); r != nil {
+			val := DecodePayload(payload, r.Type)
+			valStr := PayloadString(val)
+
+			formatted += fmt.Sprintf("%-26s %s", r.Name, valStr)
+		}
+	}
+
+	log.Println(formatted)
 }
 
 // trim returns a subslice of s by slicing off all trailing b bytes.
@@ -46,38 +59,6 @@ func printableString(s []byte) string {
 	return string(ascii)
 }
 
-type CanSendReceive int
-
-const (
-	send CanSendReceive = iota
-	receive
-)
-
-/*
-   00 00 06 80  05 00 00 00  31 00  fa  09 31
-   00 00 01 80  07 00 00 00  d2 00  fa  09 31  00 27
-   00 00 06 80  05 00 00 00  31 00  fa  09 30
-   00 00 01 80  07 00 00 00  d2 00  fa  09 30  00 73
-   |---------|  ||           |---|  ||  |---|  |---|
-   1)           2)           3)     4)  5)     6)
-
-   1) Sender CAN ID: 180 or 680
-   2) No of bytes of data - 5 for queries, 7 for replies
-   3) Receiver CAN ID of the communications partner and type of message
-       Queries:   2nd digit is 1
-	   Pattern:   n1 0m with n = 0x30, m = 0x00
-                  Partner ID: 0x30 * 8 + 0x00 = 0x180
-       Responses: 2nd digit is 2
-                  Partner ID: 0xd0 * 8 + 0x00 = 680
-   4) 0xFA indicates that the Elster index is greater than ff.
-   5) Index (parameter) queried for: 0930 for kWh and 0931 for MWh
-   6) Value returned 27h=39,73h=115
-*/
-
-func bytes2id(b []byte) uint16 {
-	return uint16(b[0]&0xF0)<<3 + uint16(b[1]&0x0F)
-}
-
 func id2bytes(id uint16) []byte {
 	b := make([]byte, 2)
 
@@ -85,29 +66,6 @@ func id2bytes(id uint16) []byte {
 	b[1] = byte(id) & 0xFF
 
 	return b
-}
-
-func logElster(frm can.Frame, data []byte) {
-	id := bytes2id(data[:2])
-
-	var reg uint16
-	var payload []byte
-
-	if data[2] == 0xFA {
-		reg = binary.BigEndian.Uint16(data[3:5])
-		payload = data[5:7]
-	} else {
-		reg = uint16(data[2])
-		payload = data[3:5]
-	}
-
-	log.Printf("id %x\n, reg %x, payload %x", id, reg, payload)
-
-	if r := Reading(reg); r != nil {
-		if val, err := Decode(payload, r.Type); err != nil {
-			log.Printf("Decoded: %f", val)
-		}
-	}
 }
 
 // func loopElster() {

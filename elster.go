@@ -4,7 +4,106 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"log"
 )
+
+/*
+   Elster frame decoding
+   ---------------------
+
+   00 00 06 80  05 00 00 00  31 00  fa  09 31
+   00 00 01 80  07 00 00 00  d2 00  fa  09 31  00 27
+   00 00 06 80  05 00 00 00  31 00  fa  09 30
+   00 00 01 80  07 00 00 00  d2 00  fa  09 30  00 73
+   |---------|  ||           |---|  ||  |---|  |---|
+   1)           2)           3)     4)  5)     6)
+
+   1) Sender CAN ID: 180 or 680
+   2) No of bytes of data - 5 for queries, 7 for replies
+   3) Receiver CAN ID of the communications partner and type of message
+       Queries:   2nd digit is 1
+	   Pattern:   n1 0m with n = 0x30, m = 0x00
+                  Partner ID: 0x30 * 8 + 0x00 = 0x180
+       Responses: 2nd digit is 2
+                  Partner ID: 0xd0 * 8 + 0x00 = 680
+   4) 0xFA indicates that the Elster index is greater than ff.
+   5) Index (parameter) queried for: 0930 for kWh and 0931 for MWh
+   6) Value returned 27h=39,73h=115
+*/
+
+func ReceiverId(b []byte) uint16 {
+	return uint16(b[0]&0xF0)<<3 + uint16(b[1]&0x0F)
+}
+
+func PayloadString(val interface{}) string {
+	if _, ok := val.(float64); ok {
+		return fmt.Sprintf("%.1f", val)
+	} else {
+		return fmt.Sprintf("%v", val)
+	}
+}
+
+func Payload(data []byte) (reg uint16, payload []byte) {
+	if data[2] == 0xFA {
+		reg = binary.BigEndian.Uint16(data[3:5])
+		payload = data[5:7]
+	} else {
+		reg = uint16(data[2])
+		payload = data[3:5]
+	}
+	return reg, payload
+}
+
+func Reading(register uint16) *ElsterReading {
+	for _, r := range ElsterReadings {
+		if r.Index == register {
+			return &r
+		}
+	}
+	return nil
+}
+
+func DecodePayload(b []byte, t ElsterType) interface{} {
+	if bytes.Equal(b, not_available) {
+		return nil
+	}
+
+	switch t {
+	case et_byte:
+		return b[0]
+
+	case et_dec_val:
+		return float64(binary.BigEndian.Uint16(b)) / 10
+	case et_cent_val:
+		return float64(binary.BigEndian.Uint16(b)) / 100
+	case et_mil_val:
+		return float64(binary.BigEndian.Uint16(b)) / 1000
+
+	case et_little_endian:
+		return binary.LittleEndian.Uint16(b)
+
+	case et_little_bool:
+		if bytes.Equal(b, ElsterResult{0x01, 0x00}) {
+			return true
+		} else if bytes.Equal(b, ElsterResult{0x00, 0x00}) {
+			return false
+		}
+		log.Fatalf("Invalid little bool % x", b)
+		return nil
+
+	case et_bool:
+		if bytes.Equal(b, ElsterResult{0x00, 0x01}) {
+			return true
+		} else if bytes.Equal(b, ElsterResult{0x00, 0x00}) {
+			return false
+		}
+		log.Fatalf("Invalid bool % x", b)
+		return nil
+	}
+
+	// default
+	return b
+}
 
 type ElsterType int
 
@@ -3725,250 +3824,3 @@ func init() {
 		{"INFOBLOCK_6", 0xfe07, 0},
 	}
 }
-
-/*
-static const ErrorIndex ErrorList[] =
-{
-  { 0x0002, "Schuetz klebt"},
-  { 0x0003, "ERR HD-SENSOR"},
-  { 0x0004, "Hochdruck"},
-  { 0x0005, "Verdampferfuehler"},
-  { 0x0006, "Relaistreiber"},
-  { 0x0007, "Relaispegel"},
-  { 0x0008, "Hexschalter"},
-  { 0x0009, "Drehzahl Luefter"},
-  { 0x000a, "Lueftertreiber"},
-  { 0x000b, "Reset Baustein"},
-  { 0x000c, "ND"},
-  { 0x000d, "ROM"},
-  { 0x000e, "QUELLEN MINTEMP"},
-  { 0x0010, "Abtauen"},
-  { 0x0012, "ERR T-HEI IWS"},
-  { 0x0017, "ERR T-FRO IWS"},
-  { 0x001a, "Niederdruck"},
-  { 0x001b, "ERR ND-DRUCK"},
-  { 0x001c, "ERR HD-DRUCK"},
-  { 0x001d, "HD-SENSOR-MAX"},
-  { 0x001e, "HEISSGAS-MAX"},
-  { 0x001f, "ERR HD-SENSOR"},
-  { 0x0020, "Einfrierschutz"},
-  { 0x0021, "KEINE LEISTUNG"}
-};
-
-static const ErrorIndex BetriebsartList[] =
-{
-  { 0x0000, "Notbetrieb" },
-  { 0x0100, "Bereitschaft" },
-  { 0x0200, "Automatik" },
-  { 0x0300, "Tagbetrieb" },
-  { 0x0400, "Absenkbetrieb" },
-  { 0x0500, "Warmwasser" }
-};
-*/
-
-func Reading(register uint16) *ElsterReading {
-	for _, r := range ElsterReadings {
-		if r.Index == register {
-			return &r
-		}
-	}
-	return nil
-}
-
-func Decode(b []byte, t ElsterType) (interface{}, error) {
-	if bytes.Equal(b, not_available) {
-		return nil, fmt.Errorf("Not available")
-	}
-
-	switch t {
-	case et_byte:
-		return float64(b[0]), nil
-
-	case et_dec_val:
-		return float64(b[0]) / 10, nil
-	case et_cent_val:
-		return float64(b[0]) / 100, nil
-	case et_mil_val:
-		return float64(b[0]) / 1000, nil
-
-	case et_little_endian:
-		return float64(binary.LittleEndian.Uint16(b)), nil
-
-	case et_little_bool:
-		if bytes.Equal(b, ElsterResult{0x01, 0x00}) {
-			return true, nil
-		} else if bytes.Equal(b, ElsterResult{0x00, 0x00}) {
-			return false, nil
-		}
-		return nil, fmt.Errorf("Invalid little bool % x", b)
-
-	case et_bool:
-		if bytes.Equal(b, ElsterResult{0x00, 0x01}) {
-			return true, nil
-		} else if bytes.Equal(b, ElsterResult{0x00, 0x00}) {
-			return false, nil
-		}
-		return nil, fmt.Errorf("Invalid bool % x", b)
-
-		//  case et_betriebsart:
-		//    if ((Value & 0xff) == 0 && (Value >> 8) <= (int) High(BetriebsartList))
-		//      strcpy(Val, BetriebsartList[Value >> 8].Name);
-		//    else
-		//      strcpy(Val, "?");
-		//    break;
-
-		//  case et_zeit:
-		//    sprintf(Val, "%2.2d:%2.2d", Value & 0xff, Value >> 8);
-		//    break;
-
-		//  case et_datum:
-		//    sprintf(Val, "%2.2d.%2.2d.", Value >> 8, Value & 0xff);
-		//    break;
-
-		//  case et_time_domain:
-		//    if (Value & 0x8080)
-		//      strcpy(Val, "not used time domain");
-		//    else
-		//      sprintf(Val, "%2.2d:%2.2d-%2.2d:%2.2d",
-		//              (Value >> 8) / 4, 15*((Value >> 8) % 4),
-		//              (Value & 0xff) / 4, 15*(Value % 4));
-		//    break;
-
-		//  case et_dev_nr:
-		//    if (Value >= 0x80)
-		//      strcpy(Val, "--");
-		//    else
-		//      sprintf(Val, "%d", Value + 1);
-		//    break;
-
-		//  case et_dev_id:
-		//    sprintf(Val, "%d-%2.2d", (Value >> 8), Value & 0xff);
-		//    break;
-
-		//  case et_err_nr:
-		//  {
-		//    int idx = -1;
-		//    for (unsigned i = 0; i <= High(ErrorList); i++)
-		//      if (ErrorList[i].Index == Value)
-		//      {
-		//        idx = i;
-		//        break;
-		//      }
-		//    if (idx >= 0)
-		//      strcpy(Val, ErrorList[idx].Name);
-		//    else
-		//      sprintf(Val, "ERR %d", Value);
-		//    break;
-		//  }
-	}
-
-	// default
-	return float64(binary.BigEndian.Uint16(b)), nil
-}
-
-/*
-void SetValueType(char * Val, unsigned char Type, unsigned short Value)
-{
-   if (Value == 0x8000)
-     strcpy(Val, "not available");
-   else
-   switch (Type)
-   {
-     case et_byte:
-       sprintf(Val, "%d", (signed char)Value);
-       break;
-
-     case et_dec_val:
-       sprintf(Val, "%.1f", ((double)((signed short)Value)) / 10.0);
-       break;
-
-     case et_cent_val:
-       sprintf(Val, "%.2f", ((double)((signed short)Value)) / 100.0);
-       break;
-
-     case et_mil_val:
-       sprintf(Val, "%.3f", ((double)((signed short)Value)) / 1000.0);
-       break;
-
-     case et_little_endian:
-       sprintf(Val, "%d", (Value >> 8) + 256*(Value & 0xff));
-       break;
-
-     case et_little_bool:
-       if (Value == 0x0100)
-         strcpy(Val, "on");
-       else
-       if (!Value)
-         strcpy(Val, "off");
-       else
-         strcpy(Val, "?");
-       break;
-
-     case et_bool:
-       if (Value == 0x0001)
-         strcpy(Val, "on");
-       else
-       if (!Value)
-         strcpy(Val, "off");
-       else
-         strcpy(Val, "?");
-       break;
-
-     case et_betriebsart:
-       if ((Value & 0xff) == 0 && (Value >> 8) <= (int) High(BetriebsartList))
-         strcpy(Val, BetriebsartList[Value >> 8].Name);
-       else
-         strcpy(Val, "?");
-       break;
-
-     case et_zeit:
-       sprintf(Val, "%2.2d:%2.2d", Value & 0xff, Value >> 8);
-       break;
-
-     case et_datum:
-       sprintf(Val, "%2.2d.%2.2d.", Value >> 8, Value & 0xff);
-       break;
-
-     case et_time_domain:
-       if (Value & 0x8080)
-         strcpy(Val, "not used time domain");
-       else
-         sprintf(Val, "%2.2d:%2.2d-%2.2d:%2.2d",
-                 (Value >> 8) / 4, 15*((Value >> 8) % 4),
-                 (Value & 0xff) / 4, 15*(Value % 4));
-       break;
-
-     case et_dev_nr:
-       if (Value >= 0x80)
-         strcpy(Val, "--");
-       else
-         sprintf(Val, "%d", Value + 1);
-       break;
-
-     case et_dev_id:
-       sprintf(Val, "%d-%2.2d", (Value >> 8), Value & 0xff);
-       break;
-
-     case et_err_nr:
-     {
-       int idx = -1;
-       for (unsigned i = 0; i <= High(ErrorList); i++)
-         if (ErrorList[i].Index == Value)
-         {
-           idx = i;
-           break;
-         }
-       if (idx >= 0)
-         strcpy(Val, ErrorList[idx].Name);
-       else
-         sprintf(Val, "ERR %d", Value);
-       break;
-     }
-
-     case et_default:
-     default:
-       sprintf(Val, "%d", (signed short)Value);
-       break;
-   }
-}
-*/
