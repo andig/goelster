@@ -24,13 +24,21 @@ func logCANFrame(frm can.Frame) {
 
 		if r := Reading(reg); r != nil {
 			val := DecodePayload(payload, r.Type)
-			valStr := PayloadString(val)
+			valStr := payloadString(val)
 
-			formatted += fmt.Sprintf("%-26s %s", r.Name, valStr)
+			formatted += fmt.Sprintf("%-18s %s", r.Name[:18], valStr)
 		}
 	}
 
 	log.Println(formatted)
+}
+
+func payloadString(val interface{}) string {
+	if _, ok := val.(float64); ok {
+		return fmt.Sprintf("%4.1f", val)
+	}
+
+	return fmt.Sprintf("%6v", val)
 }
 
 // trim returns a subslice of s by slicing off all trailing b bytes.

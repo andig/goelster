@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"log"
 )
 
@@ -33,14 +32,6 @@ import (
 
 func ReceiverId(b []byte) uint16 {
 	return uint16(b[0]&0xF0)<<3 + uint16(b[1]&0x0F)
-}
-
-func PayloadString(val interface{}) string {
-	if _, ok := val.(float64); ok {
-		return fmt.Sprintf("%.1f", val)
-	} else {
-		return fmt.Sprintf("%v", val)
-	}
 }
 
 func Payload(data []byte) (reg uint16, payload []byte) {
