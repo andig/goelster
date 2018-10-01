@@ -17,7 +17,7 @@ func logCANFrame(frm can.Frame) {
 
 	chars := fmt.Sprintf("'%s'", printableString(data[:]))
 	rcvr := ReceiverId(frm.Data[:2])
-	formatted := fmt.Sprintf("%-3s %-4x %-3s % -24X %-10s %-6x ", *i, frm.ID, length, data, chars, rcvr)
+	formatted := fmt.Sprintf("%-3s %-4x %-3s % -24X %-10s %6x ", *i, frm.ID, length, data, chars, rcvr)
 
 	if data[0]&2 != 0 { // more than receiver id
 		reg, payload := Payload(data)
@@ -27,7 +27,7 @@ func logCANFrame(frm can.Frame) {
 			val := DecodePayload(payload, r.Type)
 			valStr := payloadString(val)
 
-			formatted += fmt.Sprintf("%-20s %s", left(r.Name, 20), valStr)
+			formatted += fmt.Sprintf("%-20s %8s", left(r.Name, 20), valStr)
 		}
 	}
 
