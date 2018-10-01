@@ -46,8 +46,6 @@ func printableString(s []byte) string {
 	return string(ascii)
 }
 
-type CanId uint16
-
 type CanSendReceive int
 
 const (
@@ -55,43 +53,45 @@ const (
 	receive
 )
 
-func bytes2id(b []byte) CanId {
-	return uint16(b[0] && 0xF0)<<8+b[1] && 0x0F
+func bytes2id(b []byte) uint16 {
+	return uint16(b[0]&0xF0)<<8 + uint16(b[1]&0x0F)
 }
 
-func id2bytes(id CanId, sr CanSendReceive) []byte {
+func id2bytes(id uint16, sr CanSendReceive) []byte {
 	b := make([]byte, 2)
 
-	b[0] = (id >> 8) && 0xF0
-	b[1] = id && 0xFF
+	b[0] = byte(id>>8) & 0xF0
+	b[1] = byte(id) & 0xFF
 
 	sendreceive := byte(1)
 	if sr == receive {
 		sendreceive = 2
 	}
 
-	b[0] = b[0] || sendreceive
+	b[0] = b[0] | sendreceive
 
 	return b
 }
 
 /*
-A1 00FA 07A9 0000
+	00 00 06 80  05 00 00 00  31 00  fa  09 31
+	00 00 01 80  07 00 00 00  d2 00  fa  09 31  00 27
+	00 00 06 80  05 00 00 00  31 00  fa  09 30
+	00 00 01 80  07 00 00 00  d2 00  fa  09 30  00 73
+	|---------|  ||           |---|  ||  |---|  |---|
+	1)           2)           3)     4)  5)     6)
 
-A1 00: bedeutet Anfrage (das ist das 2. Digit "1") an die CAN-ID 500.
-Die 500 setzt sich aus 8*(A0 & f0) + (00 & 0f) zusammen, d.h. das ertste Digit A0 mal 8 plus das 4. Digit 0. Demnach ist 61 02 eine Anfrage an die CAN-ID 302.
-
-Als Antwort auf A1 00 fa 07 49 (die beiden letzten Bytes kannst Du auch weglassen) erhältst Du: D2 00 fa 07 49 xxxx. Wobei xxxx der gewünschte Wert ist und das erste Digit "D" gibt über den Sender von A100 Auskunft.
-Das müsste sich dann um die CAN-ID des Senders 780 (8*d0) handeln. Das Zweite Digit von D2, also die "2", besagt, dass es sich um eine Antwort handelt, bzw. dass nach dem Elster-Index ein gültiger Wert steht.
-
-
-92 00FA 07A9 001D
-
-92 00: bedeutet Änderung eines Wertes. Die CAN-ID ist hier 8*90 + 0, also 480. Auch hier nach "fa" kommt der Elster-Index und danach der zu setzende Wert. Hier gibt es kein Antwort-Telegramm.
-
-Die Telegramme, bei welchen 79 an 2. Stelle steht, sind "broadcast" Telegramme, die in regelmässigen Zeitabständen abgesetzt werden.
-
-An der 3. Stelle steht nicht notwendigerweise "fa" ("ERWEITERUNGSTELEGRAMM" siehe Elster-Tabelle). Wenn ein Elster-Index 2-stellig ist, also kleiner oder gleich ff ist, dann darf der Index dort direkt eingesetzt werden. Das Resultat erhält man dann im 4. und 5. Byte.
+	1) Sender CAN ID: 180 or 680
+	2) No of bytes of data - 5 for queries, 7 for replies
+	3) Receiver CAN ID of the communications partner and type of message
+		For queries the second digit is 1.
+		Pattern: n1 0m with n = 180 / 80 = 3 (hex) and m = 180 mod 8 = 0
+		(hex) Partner ID = 30 * 8 (hex) + 00 = 180
+		Responses follow a similar pattern using second digit 2:
+		Partner ID is: d0 * 8 + 00 = 680
+	4) 0xFA indicates that the Elster index is greater than ff.
+	5) Index (parameter) queried for: 0930 for kWh and 0931 for MWh
+	6) Value returned 27h=39,73h=115
 */
 
 func logElster(frm can.Frame, data []byte) {
@@ -102,27 +102,31 @@ func logElster(frm can.Frame, data []byte) {
 
 	if data[2] == 0xFA {
 		reg = binary.BigEndian.Uint16(data[3:5])
-		payload = copy(payload, data[5:7])
+		if copy(payload, data[5:7]) != 2 {
+			log.Panic("Invalid copy length")
+		}
 	} else {
 		reg = uint16(data[2])
-		payload = copy(payload, data[3:5])
+		if copy(payload, data[3:5]) != 2 {
+			log.Panic("Invalid copy length")
+		}
 	}
 
 	log.Printf("id %x\n, reg %x, payload % x", id, reg, payload)
 }
 
-func loopElster() {
-	for _, e := range ElsterReadings {
-		frm := can.Frame{
-			ID:     0x0180,
-			Length: 0,
-			Flags:  0,
-			Res0:   0,
-			Res1:   0,
-			Data:   []uint8{},
-		}
-	}
-}
+// func loopElster() {
+// 	for _, e := range ElsterReadings {
+// 		frm := can.Frame{
+// 			ID:     0x0180,
+// 			Length: 0,
+// 			Flags:  0,
+// 			Res0:   0,
+// 			Res1:   0,
+// 			Data:   [8]uint8{0, 0, 0, 0, 0, 0, 0, 0},
+// 		}
+// 	}
+// }
 
 var i = flag.String("if", "", "network interface name")
 
