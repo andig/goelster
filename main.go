@@ -53,26 +53,6 @@ const (
 	receive
 )
 
-func bytes2id(b []byte) uint16 {
-	return uint16(b[0]&0xF0)<<8 + uint16(b[1]&0x0F)
-}
-
-func id2bytes(id uint16, sr CanSendReceive) []byte {
-	b := make([]byte, 2)
-
-	b[0] = byte(id>>8) & 0xF0
-	b[1] = byte(id) & 0xFF
-
-	sendreceive := byte(1)
-	if sr == receive {
-		sendreceive = 2
-	}
-
-	b[0] = b[0] | sendreceive
-
-	return b
-}
-
 /*
    00 00 06 80  05 00 00 00  31 00  fa  09 31
    00 00 01 80  07 00 00 00  d2 00  fa  09 31  00 27
@@ -85,14 +65,27 @@ func id2bytes(id uint16, sr CanSendReceive) []byte {
    2) No of bytes of data - 5 for queries, 7 for replies
    3) Receiver CAN ID of the communications partner and type of message
        Queries:   2nd digit is 1
-       Pattern:   n1 0m with n = 180 / 80 = 3 and m = 180 mod 8 = 0
-                  Partner ID: 30 * 8 + 00 = 180
+	   Pattern:   n1 0m with n = 0x30, m = 0x00
+                  Partner ID: 0x30 * 8 + 0x00 = 0x180
        Responses: 2nd digit is 2
-                  Partner ID: d0 * 8 + 00 = 680
+                  Partner ID: 0xd0 * 8 + 0x00 = 680
    4) 0xFA indicates that the Elster index is greater than ff.
    5) Index (parameter) queried for: 0930 for kWh and 0931 for MWh
    6) Value returned 27h=39,73h=115
 */
+
+func bytes2id(b []byte) uint16 {
+	return uint16(b[0]&0xF0)<<3 + uint16(b[1]&0x0F)
+}
+
+func id2bytes(id uint16) []byte {
+	b := make([]byte, 2)
+
+	b[0] = byte(id>>3) & 0xF0
+	b[1] = byte(id) & 0xFF
+
+	return b
+}
 
 func logElster(frm can.Frame, data []byte) {
 	id := bytes2id(data[:2])
