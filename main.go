@@ -74,24 +74,24 @@ func id2bytes(id uint16, sr CanSendReceive) []byte {
 }
 
 /*
-	00 00 06 80  05 00 00 00  31 00  fa  09 31
-	00 00 01 80  07 00 00 00  d2 00  fa  09 31  00 27
-	00 00 06 80  05 00 00 00  31 00  fa  09 30
-	00 00 01 80  07 00 00 00  d2 00  fa  09 30  00 73
-	|---------|  ||           |---|  ||  |---|  |---|
-	1)           2)           3)     4)  5)     6)
+   00 00 06 80  05 00 00 00  31 00  fa  09 31
+   00 00 01 80  07 00 00 00  d2 00  fa  09 31  00 27
+   00 00 06 80  05 00 00 00  31 00  fa  09 30
+   00 00 01 80  07 00 00 00  d2 00  fa  09 30  00 73
+   |---------|  ||           |---|  ||  |---|  |---|
+   1)           2)           3)     4)  5)     6)
 
-	1) Sender CAN ID: 180 or 680
-	2) No of bytes of data - 5 for queries, 7 for replies
-	3) Receiver CAN ID of the communications partner and type of message
-		For queries the second digit is 1.
-		Pattern: n1 0m with n = 180 / 80 = 3 (hex) and m = 180 mod 8 = 0
-		(hex) Partner ID = 30 * 8 (hex) + 00 = 180
-		Responses follow a similar pattern using second digit 2:
-		Partner ID is: d0 * 8 + 00 = 680
-	4) 0xFA indicates that the Elster index is greater than ff.
-	5) Index (parameter) queried for: 0930 for kWh and 0931 for MWh
-	6) Value returned 27h=39,73h=115
+   1) Sender CAN ID: 180 or 680
+   2) No of bytes of data - 5 for queries, 7 for replies
+   3) Receiver CAN ID of the communications partner and type of message
+       Queries:   2nd digit is 1
+       Pattern:   n1 0m with n = 180 / 80 = 3 and m = 180 mod 8 = 0
+                  Partner ID: 30 * 8 + 00 = 180
+       Responses: 2nd digit is 2
+                  Partner ID: d0 * 8 + 00 = 680
+   4) 0xFA indicates that the Elster index is greater than ff.
+   5) Index (parameter) queried for: 0930 for kWh and 0931 for MWh
+   6) Value returned 27h=39,73h=115
 */
 
 func logElster(frm can.Frame, data []byte) {
@@ -112,7 +112,7 @@ func logElster(frm can.Frame, data []byte) {
 		}
 	}
 
-	log.Printf("id %x\n, reg %x, payload % x", id, reg, payload)
+	log.Printf("id %x\n, reg %x, payload %x", id, reg, payload)
 }
 
 // func loopElster() {
