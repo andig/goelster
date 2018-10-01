@@ -21,7 +21,7 @@ func logCANFrame(frm can.Frame) {
 
 	if len(data) > 2 { // more than receiver id
 		reg, payload := Payload(data)
-		formatted += fmt.Sprintf("%4x ", reg)
+		formatted += fmt.Sprintf("%04X ", reg)
 
 		if r := Reading(reg); r != nil {
 			val := DecodePayload(payload, r.Type)
