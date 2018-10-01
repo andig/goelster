@@ -19,10 +19,10 @@ func logCANFrame(frm can.Frame) {
 	rcvr := ReceiverId(frm.Data[:2])
 	formatted := fmt.Sprintf("%-3s %-4x %-3s % -24X %-10s %6x ", *i, frm.ID, length, data, chars, rcvr)
 
-	if data[0]&2 != 0 { // more than receiver id
-		reg, payload := Payload(data)
-		formatted += fmt.Sprintf("%04X ", reg)
+	reg, payload, consumed := Payload(data)
+	formatted += fmt.Sprintf("%04X ", reg)
 
+	if consumed <= len(data) { // more than receiver id
 		if r := Reading(reg); r != nil {
 			val := DecodePayload(payload, r.Type)
 			valStr := payloadString(val)

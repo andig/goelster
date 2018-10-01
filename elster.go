@@ -34,15 +34,17 @@ func ReceiverId(b []byte) uint16 {
 	return uint16(b[0]&0xF0)<<3 + uint16(b[1]&0x0F)
 }
 
-func Payload(data []byte) (reg uint16, payload []byte) {
+func Payload(data []byte) (reg uint16, payload []byte, length int) {
 	if data[2] == 0xFA {
 		reg = binary.BigEndian.Uint16(data[3:5])
 		payload = data[5:7]
+		length = 7
 	} else {
 		reg = uint16(data[2])
 		payload = data[3:5]
+		length = 5
 	}
-	return reg, payload
+	return reg, payload, length
 }
 
 func Reading(register uint16) *ElsterReading {
