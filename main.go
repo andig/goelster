@@ -91,21 +91,23 @@ func logElster(frm can.Frame, data []byte) {
 	id := bytes2id(data[:2])
 
 	var reg uint16
-	payload := make([]byte, 2)
+	var payload []byte
 
 	if data[2] == 0xFA {
 		reg = binary.BigEndian.Uint16(data[3:5])
-		if copy(payload, data[5:7]) != 2 {
-			log.Panic("Invalid copy length")
-		}
+		payload = data[5:7]
 	} else {
 		reg = uint16(data[2])
-		if copy(payload, data[3:5]) != 2 {
-			log.Panic("Invalid copy length")
-		}
+		payload = data[3:5]
 	}
 
 	log.Printf("id %x\n, reg %x, payload %x", id, reg, payload)
+
+	if r := Reading(reg); r != nil {
+		if val, err := Decode(payload, r.Type); err != nil {
+			log.Printf("Decoded: %f", val)
+		}
+	}
 }
 
 // func loopElster() {

@@ -3766,6 +3766,15 @@ static const ErrorIndex BetriebsartList[] =
 };
 */
 
+func Reading(register uint16) *ElsterReading {
+	for _, r := range ElsterReadings {
+		if r.Index == register {
+			return &r
+		}
+	}
+	return nil
+}
+
 func Decode(b []byte, t ElsterType) (interface{}, error) {
 	if bytes.Equal(b, not_available) {
 		return nil, fmt.Errorf("Not available")
