@@ -19,7 +19,7 @@ func logCANFrame(frm can.Frame) {
 	rcvr := ReceiverId(frm.Data[:2])
 	formatted := fmt.Sprintf("%-3s %-4x %-3s % -24X %-10s %-6x", *i, frm.ID, length, data, chars, rcvr)
 
-	if len(data) > 0 {
+	if len(data) > 2 { // more than receiver id
 		reg, payload := Payload(data)
 
 		if r := Reading(reg); r != nil {
@@ -38,7 +38,7 @@ func payloadString(val interface{}) string {
 		return fmt.Sprintf("%4.1f", val)
 	}
 
-	return fmt.Sprintf("%6v", val)
+	return fmt.Sprintf("%v", val)
 }
 
 func left(s string, chars int) string {
