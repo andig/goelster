@@ -17,7 +17,7 @@ func logCANFrame(frm can.Frame) {
 
 	chars := fmt.Sprintf("'%s'", printableString(data[:]))
 	rcvr := ReceiverId(frm.Data[:2])
-	formatted := fmt.Sprintf("%-3s %-4x %-3s % -24X %-10s %-4x", *i, frm.ID, length, data, chars, rcvr)
+	formatted := fmt.Sprintf("%-3s %-4x %-3s % -24X %-10s %-6x", *i, frm.ID, length, data, chars, rcvr)
 
 	if len(data) > 0 {
 		reg, payload := Payload(data)
@@ -26,7 +26,7 @@ func logCANFrame(frm can.Frame) {
 			val := DecodePayload(payload, r.Type)
 			valStr := payloadString(val)
 
-			formatted += fmt.Sprintf("%-18s %s", r.Name[:18], valStr)
+			formatted += fmt.Sprintf("%-18s %s", left(r.Name, 18), valStr)
 		}
 	}
 
@@ -39,6 +39,14 @@ func payloadString(val interface{}) string {
 	}
 
 	return fmt.Sprintf("%6v", val)
+}
+
+func left(s string, chars int) string {
+	l := len(s)
+	if chars < l {
+		l = chars
+	}
+	return s[:l]
 }
 
 // trim returns a subslice of s by slicing off all trailing b bytes.
