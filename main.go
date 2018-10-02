@@ -24,7 +24,7 @@ func logCANFrame(frm can.Frame) {
 
 	if data[0]&Data != 0 {
 		if r := Reading(reg); r != nil {
-			val := Decode(payload, r.Type)
+			val := DecodeValue(payload, r.Type)
 			valStr := payloadString(val)
 
 			formatted += fmt.Sprintf("%-20s %8s", left(r.Name, 20), valStr)

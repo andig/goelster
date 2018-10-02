@@ -62,7 +62,7 @@ func Reading(register uint16) *ElsterReading {
 	return nil
 }
 
-func Decode(b []byte, t ElsterType) interface{} {
+func DecodeValue(b []byte, t ElsterType) interface{} {
 	if bytes.Equal(b, []byte{0x80, 0x00}) {
 		return nil
 	}
@@ -103,7 +103,7 @@ func Decode(b []byte, t ElsterType) interface{} {
 	return b
 }
 
-func Encode(val interface{}, t ElsterType) []byte {
+func EncodeValue(val interface{}, t ElsterType) []byte {
 	b := []byte{0, 0}
 
 	switch t {
@@ -133,5 +133,40 @@ func Encode(val interface{}, t ElsterType) []byte {
 	}
 
 	// default
+	return b
+}
+
+func EncodeRegister(b []byte, register uint16) int {
+	if register > 0xFF {
+		b[2] = 0xFA
+		binary.BigEndian.PutUint16(b[3:], register)
+		return 5
+	}
+
+	b[2] = byte(register)
+	return 3
+}
+
+func EncodeReceiver(b []byte, receiverId uint16, requestType byte) {
+	b[0] = byte(receiverId>>3)&0xF0 | requestType
+	b[1] = byte(receiverId) & 0x0F
+}
+
+func RequestFrame(receiverId uint16, reading ElsterReading) []byte {
+	b := make([]byte, 8)
+
+	EncodeReceiver(b, receiverId, Request)
+	EncodeRegister(b, reading.Index)
+
+	return b
+}
+
+func DataFrame(receiverId uint16, val interface{}, reading ElsterReading) []byte {
+	b := make([]byte, 8)
+
+	EncodeReceiver(b, receiverId, Data)
+	valIdx := EncodeRegister(b, reading.Index)
+	copy(b[valIdx:], EncodeValue(val, reading.Type))
+
 	return b
 }
