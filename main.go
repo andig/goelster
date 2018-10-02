@@ -19,12 +19,12 @@ func logCANFrame(frm can.Frame) {
 	rcvr := ReceiverId(frm.Data[:2])
 	formatted := fmt.Sprintf("%-3s %-4x %-3s % -24X %-10s %6x ", *i, frm.ID, length, data, chars, rcvr)
 
-	reg, payload, consumed := Payload(data)
+	reg, payload := Payload(data)
 	formatted += fmt.Sprintf("%04X ", reg)
 
-	if consumed <= len(data) { // more than receiver id
+	if data[0]&Data != 0 {
 		if r := Reading(reg); r != nil {
-			val := DecodePayload(payload, r.Type)
+			val := Decode(payload, r.Type)
 			valStr := payloadString(val)
 
 			formatted += fmt.Sprintf("%-20s %8s", left(r.Name, 20), valStr)
@@ -106,18 +106,6 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-
-	// iface, err := net.InterfaceByName(*i)
-	// if err != nil {
-	// 	log.Fatalf("Could not find network interface %s (%v)", *i, err)
-	// }
-
-	// conn, err := can.NewReadWriteCloserForInterface(iface)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// bus := can.NewBus(conn)
 
 	bus, err := can.NewBusForInterfaceWithName(*i)
 	if err != nil {
