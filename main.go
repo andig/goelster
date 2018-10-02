@@ -6,9 +6,12 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/brutella/can"
 )
+
+var scanFrame can.Frame
 
 // logCANFrame logs a frame with the same format as candump from can-utils.
 func logCANFrame(frm can.Frame) {
@@ -17,6 +20,42 @@ func logCANFrame(frm can.Frame) {
 
 	chars := fmt.Sprintf("'%s'", printableString(data[:]))
 	rcvr := ReceiverId(frm.Data[:2])
+	formatted := fmt.Sprintf("%-3s %-4x %-3s % -24X %-10s %6x ", *i, frm.ID, length, data, chars, rcvr)
+
+	reg, payload := Payload(data)
+	formatted += fmt.Sprintf("%04X ", reg)
+
+	if data[0]&Data != 0 {
+		if r := Reading(reg); r != nil {
+			val := DecodeValue(payload, r.Type)
+			valStr := payloadString(val)
+
+			formatted += fmt.Sprintf("%-20s %8s", left(r.Name, 20), valStr)
+		}
+	}
+
+	log.Println(formatted)
+}
+
+// logCANFrame logs a frame with the same format as candump from can-utils.
+func logCANFrame2(frm can.Frame) {
+	rcvr := ReceiverId(frm.Data[:2])
+	scanRcvr := ReceiverId(scanFrame.Data[:2])
+
+	var match bool
+	if frm.ID == scanFrame.ID && rcvr == scanRcvr {
+		match = true
+	} else if uint16(frm.ID) == scanRcvr && rcvr == uint16(scanFrame.ID) {
+		match = true
+	}
+
+	if !match {
+		return
+	}
+
+	data := trimSuffix(frm.Data[:], 0x00)
+	chars := fmt.Sprintf("'%s'", printableString(data[:]))
+	length := fmt.Sprintf("[%x]", frm.Length)
 	formatted := fmt.Sprintf("%-3s %-4x %-3s % -24X %-10s %6x ", *i, frm.ID, length, data, chars, rcvr)
 
 	reg, payload := Payload(data)
@@ -78,7 +117,7 @@ func printableString(s []byte) string {
 
 func loopElster(bus *can.Bus) {
 	for _, r := range ElsterReadings {
-		frm := can.Frame{
+		scanFrame = can.Frame{
 			ID:     0x0680,
 			Length: 8,
 			Flags:  0,
@@ -86,8 +125,8 @@ func loopElster(bus *can.Bus) {
 			Res1:   0,
 			Data:   [8]uint8{},
 		}
-		copy(frm.Data[:], RequestFrame(0x180, r))
-		bus.Publish(frm)
+		copy(scanFrame.Data[:], RequestFrame(0x180, r))
+		bus.Publish(scanFrame)
 	}
 }
 
@@ -105,8 +144,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	bus.SubscribeFunc(logCANFrame)
-
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt)
 	signal.Notify(c, os.Kill)
@@ -119,7 +156,13 @@ func main() {
 		}
 	}()
 
-	bus.ConnectAndPublish()
+	go bus.ConnectAndPublish()
 
+	// bus.SubscribeFunc(logCANFrame)
+	bus.SubscribeFunc(logCANFrame2)
 	loopElster(bus)
+
+	for {
+		time.Sleep(40 * time.Millisecond)
+	}
 }

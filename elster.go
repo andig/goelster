@@ -10,12 +10,12 @@ import (
    Elster frame decoding
    ---------------------
 
-   00 00 06 80  05 00 00 00  31 00  fa  09 31
-   00 00 01 80  07 00 00 00  d2 00  fa  09 31  00 27
-   00 00 06 80  05 00 00 00  31 00  fa  09 30
-   00 00 01 80  07 00 00 00  d2 00  fa  09 30  00 73
-   |---------|  ||           |---|  ||  |---|  |---|
-   1)           2)           3)     4)  5)     6)
+   06 80  05  31 00  fa  09 31
+   01 80  07  d2 00  fa  09 31  00 27
+   06 80  05  31 00  fa  09 30
+   01 80  07  d2 00  fa  09 30  00 73
+   |---|  ||  |---|  ||  |---|  |---|
+   1)     2)  3)     4)  5)     6)
 
    1) Sender CAN ID: 180 or 680
    2) No of bytes of data - 5 for queries, 7 for replies
@@ -24,7 +24,7 @@ import (
 	   Pattern:   n1 0m with n = 0x30, m = 0x00
                   Partner ID: 0x30 * 8 + 0x00 = 0x180
        Responses: 2nd digit is 2
-                  Partner ID: 0xd0 * 8 + 0x00 = 680
+                  Partner ID: 0xd0 * 8 + 0x00 = 0x680
    4) 0xFA indicates that the Elster index is greater than ff.
    5) Index (parameter) queried for: 0930 for kWh and 0931 for MWh
    6) Value returned 27h=39,73h=115
