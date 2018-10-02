@@ -63,14 +63,15 @@ func logCANFrame2(frm can.Frame) {
 
 	if data[0]&Data != 0 {
 		if r := Reading(reg); r != nil {
-			val := DecodeValue(payload, r.Type)
-			valStr := payloadString(val)
+			if val := DecodeValue(payload, r.Type); val != nil {
+				valStr := payloadString(val)
 
-			formatted += fmt.Sprintf("%-20s %8s", left(r.Name, 20), valStr)
+				formatted += fmt.Sprintf("%-20s %8s", left(r.Name, 20), valStr)
+				log.Println(formatted)
+			}
+			return
 		}
 	}
-
-	log.Println(formatted)
 }
 
 func payloadString(val interface{}) string {
