@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"time"
 
 	"github.com/brutella/can"
 )
@@ -63,12 +62,12 @@ func logCANFrame2(frm can.Frame) {
 
 	if data[0]&Data != 0 {
 		if r := Reading(reg); r != nil {
-			if val := DecodeValue(payload, r.Type); val != nil {
-				valStr := payloadString(val)
+			val := DecodeValue(payload, r.Type)
+			valStr := payloadString(val)
 
-				formatted += fmt.Sprintf("%-20s %8s", left(r.Name, 20), valStr)
-				log.Println(formatted)
-			}
+			formatted += fmt.Sprintf("%-20s %8s", left(r.Name, 20), valStr)
+			log.Println(formatted)
+
 			return
 		}
 	}
@@ -157,13 +156,11 @@ func main() {
 		}
 	}()
 
+	// bus.SubscribeFunc(logCANFrame)
+	// bus.ConnectAndPublish()
+
 	go bus.ConnectAndPublish()
 
-	// bus.SubscribeFunc(logCANFrame)
 	bus.SubscribeFunc(logCANFrame2)
 	loopElster(bus)
-
-	for {
-		time.Sleep(40 * time.Millisecond)
-	}
 }
