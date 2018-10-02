@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/brutella/can"
 )
@@ -62,11 +63,12 @@ func logCANFrame2(frm can.Frame) {
 
 	if data[0]&Data != 0 {
 		if r := Reading(reg); r != nil {
-			val := DecodeValue(payload, r.Type)
-			valStr := payloadString(val)
+			if val := DecodeValue(payload, r.Type); val != nil {
+				valStr := payloadString(val)
 
-			formatted += fmt.Sprintf("%-20s %8s", left(r.Name, 20), valStr)
-			log.Println(formatted)
+				formatted += fmt.Sprintf("%-20s %8s", left(r.Name, 20), valStr)
+				log.Println(formatted)
+			}
 
 			return
 		}
@@ -127,6 +129,8 @@ func loopElster(bus *can.Bus) {
 		}
 		copy(scanFrame.Data[:], RequestFrame(0x180, r))
 		bus.Publish(scanFrame)
+
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
