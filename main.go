@@ -76,27 +76,20 @@ func printableString(s []byte) string {
 	return string(ascii)
 }
 
-func id2bytes(id uint16) []byte {
-	b := make([]byte, 2)
-
-	b[0] = byte(id>>3) & 0xF0
-	b[1] = byte(id) & 0xFF
-
-	return b
+func loopElster(bus *can.Bus) {
+	for _, r := range ElsterReadings {
+		frm := can.Frame{
+			ID:     0x0680,
+			Length: 8,
+			Flags:  0,
+			Res0:   0,
+			Res1:   0,
+			Data:   [8]uint8{},
+		}
+		copy(frm.Data[:], RequestFrame(0x180, r))
+		bus.Publish(frm)
+	}
 }
-
-// func loopElster() {
-// 	for _, e := range ElsterReadings {
-// 		frm := can.Frame{
-// 			ID:     0x0180,
-// 			Length: 0,
-// 			Flags:  0,
-// 			Res0:   0,
-// 			Res1:   0,
-// 			Data:   [8]uint8{0, 0, 0, 0, 0, 0, 0, 0},
-// 		}
-// 	}
-// }
 
 var i = flag.String("if", "", "network interface name")
 
@@ -128,5 +121,5 @@ func main() {
 
 	bus.ConnectAndPublish()
 
-	// loopElster()
+	loopElster(bus)
 }
