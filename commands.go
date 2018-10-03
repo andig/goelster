@@ -82,7 +82,7 @@ func CanScan(bus *can.Bus, sender uint16, receiver uint16) {
 			_, payload := Payload(frm.Data[:])
 			val := DecodeValue(payload, r.Type)
 
-			if RawLog || val != nil {
+			if RawLog {
 				LogFrame(*frm)
 			} else {
 				LogRegisterValue(val, r)
