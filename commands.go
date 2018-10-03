@@ -11,7 +11,7 @@ import (
 )
 
 func CanDump(bus *can.Bus) {
-	bus.SubscribeFunc(logFrame)
+	bus.SubscribeFunc(LogFrame)
 	bus.ConnectAndPublish()
 }
 
@@ -79,12 +79,13 @@ func CanScan(bus *can.Bus, sender uint16, receiver uint16) {
 
 	for _, r := range ElsterReadings {
 		if frm := readRegister(bus, sender, receiver, r); frm != nil {
-
 			_, payload := Payload(frm.Data[:])
 			val := DecodeValue(payload, r.Type)
 
 			if RawLog || val != nil {
-				logFrame(*frm)
+				LogFrame(*frm)
+			} else {
+				LogRegisterValue(val, r)
 			}
 		}
 	}
@@ -105,7 +106,7 @@ func CanRead(bus *can.Bus, sender uint16, receiver uint16, register uint16) {
 	}
 
 	if RawLog {
-		logFrame(*frm)
+		LogFrame(*frm)
 	} else {
 		_, payload := Payload(frm.Data[:])
 		val := DecodeValue(payload, r.Type)

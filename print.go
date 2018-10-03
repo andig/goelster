@@ -9,8 +9,8 @@ import (
 
 var RawLog bool
 
-// logFrame logs a frame with the same format as candump from can-utils.
-func logFrame(frm can.Frame) {
+// LogFrame logs a frame with the same format as candump from can-utils.
+func LogFrame(frm can.Frame) {
 	data := trimSuffix(frm.Data[:], 0x00)
 	length := fmt.Sprintf("[%x]", frm.Length)
 
@@ -31,6 +31,12 @@ func logFrame(frm can.Frame) {
 	}
 
 	log.Println(formatted)
+}
+
+func LogRegisterValue(val interface{}, r ElsterReading) {
+	valStr := ValueString(val)
+	formatted := fmt.Sprintf("%X %-20s %8s", r.Index, left(r.Name, 20), valStr)
+	fmt.Println(formatted)
 }
 
 func ValueString(val interface{}) string {
