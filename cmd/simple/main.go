@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/brutella/can"
+
+	. "github.com/andig/goelster"
 )
 
 var scanFrame can.Frame
@@ -72,9 +74,9 @@ func logCANFrame2(frm can.Frame) {
 				valStr := payloadString(val)
 
 				formatted += fmt.Sprintf("%-20s %8s", left(r.Name, 20), valStr)
-				log.Println(formatted)
 			}
 
+			log.Println(formatted)
 			return
 		}
 	}

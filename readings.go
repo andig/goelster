@@ -1,4 +1,4 @@
-package main
+package goelster
 
 type ElsterType int
 
@@ -29,6 +29,13 @@ type ElsterReading struct {
 }
 
 var ElsterReadings []ElsterReading
+
+/**
+ * Elster reading definitions from can_progs
+ * http://juerg5524.ch/list_data.php
+ *
+ * Copyright (c) 2014 Jürg Müller
+ */
 
 func init() {
 	ElsterReadings = []ElsterReading{
