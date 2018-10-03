@@ -12,6 +12,7 @@ import (
 )
 
 var scanFrame can.Frame
+var scanRegister uint16
 
 // logCANFrame logs a frame with the same format as candump from can-utils.
 func logCANFrame(frm can.Frame) {
@@ -53,12 +54,16 @@ func logCANFrame2(frm can.Frame) {
 		return
 	}
 
+	reg, payload := Payload(frm.Data[:])
+	if reg != scanRegister {
+		return
+	}
+
 	data := trimSuffix(frm.Data[:], 0x00)
 	chars := fmt.Sprintf("'%s'", printableString(data[:]))
 	length := fmt.Sprintf("[%x]", frm.Length)
 	formatted := fmt.Sprintf("%-3s %-4x %-3s % -24X %-10s %6x ", *i, frm.ID, length, data, chars, rcvr)
 
-	reg, payload := Payload(data)
 	formatted += fmt.Sprintf("%04X ", reg)
 
 	if data[0]&Data != 0 {
@@ -119,6 +124,7 @@ func printableString(s []byte) string {
 
 func loopElster(bus *can.Bus) {
 	for _, r := range ElsterReadings {
+		scanRegister = r.Index
 		scanFrame = can.Frame{
 			ID:     0x0680,
 			Length: 8,
@@ -164,7 +170,6 @@ func main() {
 	// bus.ConnectAndPublish()
 
 	go bus.ConnectAndPublish()
-
 	bus.SubscribeFunc(logCANFrame2)
 	loopElster(bus)
 }
