@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/brutella/can"
@@ -113,7 +112,7 @@ func CanRead(bus *can.Bus, sender uint16, receiver uint16, register uint16) {
 		_, payload := Payload(frm.Data[:])
 		val := DecodeValue(payload, r.Type)
 		valStr := ValueString(val)
-		fmt.Println(strings.Trim(valStr, " "))
+		fmt.Println(valStr)
 	}
 }
 
