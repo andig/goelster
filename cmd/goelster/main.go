@@ -97,6 +97,8 @@ COPYRIGHT:
 				return nil
 			}
 
+			RawLog = c.Bool("verbose")
+
 			command = scan
 			s, err := strconv.ParseUint(c.Args().Get(1), 16, 16)
 			if err != nil {

@@ -7,6 +7,8 @@ import (
 	"github.com/brutella/can"
 )
 
+var RawLog bool
+
 // logFrame logs a frame with the same format as candump from can-utils.
 func logFrame(frm can.Frame) {
 	data := trimSuffix(frm.Data[:], 0x00)
@@ -22,7 +24,7 @@ func logFrame(frm can.Frame) {
 	if data[0]&Data != 0 {
 		if r := Reading(reg); r != nil {
 			val := DecodeValue(payload, r.Type)
-			valStr := payloadString(val)
+			valStr := ValueString(val)
 
 			formatted += fmt.Sprintf("%-20s %8s", left(r.Name, 20), valStr)
 		}
@@ -31,12 +33,14 @@ func logFrame(frm can.Frame) {
 	log.Println(formatted)
 }
 
-func payloadString(val interface{}) string {
+func ValueString(val interface{}) string {
 	if _, ok := val.(float64); ok {
 		return fmt.Sprintf("%6.1f", val)
+	} else if _, ok := val.(bool); ok {
+		return fmt.Sprintf("%6t", val)
 	}
 
-	return fmt.Sprintf("%v", val)
+	return fmt.Sprintf("%6X", val)
 }
 
 func left(s string, chars int) string {
