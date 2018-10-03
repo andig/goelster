@@ -41,16 +41,16 @@ func LogRegisterValue(val interface{}, r ElsterReading) {
 
 func ValueString(val interface{}) string {
 	if _, ok := val.(float64); ok {
-		return fmt.Sprintf("%8.1f", val)
+		return fmt.Sprintf("%.1f", val)
 	} else if _, ok := val.(string); ok {
-		return fmt.Sprintf("%8s", val)
+		return fmt.Sprintf("%s", val)
 	} else if _, ok := val.(bool); ok {
-		return fmt.Sprintf("%8t", val)
+		return fmt.Sprintf("%t", val)
 	} else if val == nil {
-		return fmt.Sprintf("%8v", val)
+		return fmt.Sprintf("%v", val)
 	}
 
-	return fmt.Sprintf("%8X", val)
+	return fmt.Sprintf("0x%04X", val)
 }
 
 func left(s string, chars int) string {
