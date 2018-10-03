@@ -38,6 +38,8 @@ func ValueString(val interface{}) string {
 		return fmt.Sprintf("%6.1f", val)
 	} else if _, ok := val.(bool); ok {
 		return fmt.Sprintf("%6t", val)
+	} else if val == nil {
+		return fmt.Sprintf("%v", val)
 	}
 
 	return fmt.Sprintf("%6X", val)

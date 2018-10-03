@@ -63,9 +63,9 @@ EXAMPLES:
 
 	dump traffic:    goelster slcan0
 	scan device:     goelster slcan0 680 180
-	read register:   goelster slcan0 680 180.000e
-	write register:  goelster slcan0 680 180.000e.01a4
-	numeric write:   goelster slcan0 680 180.000e 42.1
+	read register:   goelster slcan0 680 180.0013
+	write register:  goelster slcan0 680 180.0013.01a4
+	numeric write:   goelster slcan0 680 180.0013 42.1
 {{if .Copyright}}
 COPYRIGHT:
    {{.Copyright}}{{end}}
