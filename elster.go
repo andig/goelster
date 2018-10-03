@@ -70,7 +70,7 @@ func DecodeValue(b []byte, t ElsterType) interface{} {
 
 	switch t {
 	case et_little_endian:
-		return binary.LittleEndian.Uint16(b)
+		return float64(binary.LittleEndian.Uint16(b))
 	case et_dec_val:
 		return float64(binary.BigEndian.Uint16(b)) / 10
 	case et_cent_val:
@@ -86,7 +86,7 @@ func DecodeValue(b []byte, t ElsterType) interface{} {
 		return fmt.Sprintf("%02d:%02d", byte(val&0xff), byte(val>>8))
 	case et_datum:
 		val := binary.BigEndian.Uint16(b)
-		return fmt.Sprintf("%02d.%02d.", byte(val>>8), byte(val&0xff))
+		return fmt.Sprintf("%02d.%02d", byte(val>>8), byte(val&0xff))
 	case et_time_domain:
 		val := binary.BigEndian.Uint16(b)
 		if val&0x8080 == 0 {
