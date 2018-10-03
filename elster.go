@@ -89,12 +89,12 @@ func DecodeValue(b []byte, t ElsterType) interface{} {
 		return fmt.Sprintf("%02d.%02d.", byte(val>>8), byte(val&0xff))
 	case et_time_domain:
 		val := binary.BigEndian.Uint16(b)
-		if val&0x8080 != 0 {
-			return nil
+		if val&0x8080 == 0 {
+			return fmt.Sprintf("%02d:%02d-%02d:%02d",
+				byte((val>>8)/4), byte(15*((val>>8)%4)),
+				byte((val&0xff)/4), byte(15*(val%4)))
 		}
-		return fmt.Sprintf("%02d:%02d-%02d:%02d",
-			byte((val>>8)/4), byte(15*((val>>8)%4)),
-			byte((val&0xff)/4), byte(15*(val%4)))
+		return nil
 
 	case et_little_bool:
 		if bytes.Equal(b, []byte{0x01, 0x00}) {
