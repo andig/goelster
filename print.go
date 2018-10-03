@@ -26,7 +26,7 @@ func LogFrame(frm can.Frame) {
 			val := DecodeValue(payload, r.Type)
 			valStr := ValueString(val)
 
-			formatted += fmt.Sprintf("%-20s %8s", left(r.Name, 20), valStr)
+			formatted += fmt.Sprintf("%-24s %11s", left(r.Name, 20), valStr)
 		}
 	}
 
@@ -35,7 +35,7 @@ func LogFrame(frm can.Frame) {
 
 func LogRegisterValue(val interface{}, r ElsterReading) {
 	valStr := ValueString(val)
-	formatted := fmt.Sprintf("%04X %-20s %8s", r.Index, left(r.Name, 20), valStr)
+	formatted := fmt.Sprintf("%04X %-24s %11s", r.Index, left(r.Name, 20), valStr)
 	fmt.Println(formatted)
 }
 
