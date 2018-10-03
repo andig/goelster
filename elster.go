@@ -3,6 +3,7 @@ package goelster
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"log"
 )
 
@@ -79,6 +80,21 @@ func DecodeValue(b []byte, t ElsterType) interface{} {
 
 	case et_byte:
 		return b[0]
+
+	case et_zeit:
+		val := binary.BigEndian.Uint16(b)
+		return fmt.Sprintf("%2.2d:%2.2d", val&0xff, val>>8)
+	case et_datum:
+		val := binary.BigEndian.Uint16(b)
+		return fmt.Sprintf("%2.2d.%2.2d.", val>>8, val&0xff)
+	case et_time_domain:
+		val := binary.BigEndian.Uint16(b)
+		if val&0x8080 != 0 {
+			return nil
+		}
+		return fmt.Sprintf("%2.2d:%2.2d-%2.2d:%2.2d",
+			(val>>8)/4, 15*((val>>8)%4),
+			(val&0xff)/4, 15*(val%4))
 
 	case et_little_bool:
 		if bytes.Equal(b, []byte{0x01, 0x00}) {
