@@ -38,7 +38,7 @@ func makeScanMatcher(
 }
 
 // createReadFrame constructs a CAN bus request frame
-func createReadFrame(sender uint16, receiver uint16, r ElsterReading) *can.Frame {
+func createReadFrame(sender uint16, receiver uint16, r *ElsterReading) *can.Frame {
 	frm := can.Frame{
 		ID:     uint32(sender),
 		Length: 8,
@@ -52,7 +52,7 @@ func readRegister(
 	bus *can.Bus,
 	sender uint16,
 	receiver uint16,
-	r ElsterReading,
+	r *ElsterReading,
 ) *can.Frame {
 	c := make(chan can.Frame) // signalling channel
 	frm := createReadFrame(sender, receiver, r)
@@ -101,7 +101,7 @@ func CanRead(bus *can.Bus, sender uint16, receiver uint16, register uint16) {
 	go bus.ConnectAndPublish()
 	defer bus.Disconnect()
 
-	frm := readRegister(bus, sender, receiver, *r)
+	frm := readRegister(bus, sender, receiver, r)
 	if frm == nil {
 		os.Exit(1)
 	}
