@@ -28,7 +28,7 @@ type ElsterReading struct {
 	Type  ElsterType
 }
 
-var ElsterReadings []ElsterReading
+var ElsterReadings []*ElsterReading
 
 /**
  * Elster reading definitions from can_progs
@@ -38,7 +38,7 @@ var ElsterReadings []ElsterReading
  */
 
 func init() {
-	ElsterReadings = []ElsterReading{
+	ElsterReadings = []*ElsterReading{
 		{"FEHLERMELDUNG", 0x0001, 0},
 		{"KESSELSOLLTEMP", 0x0002, et_dec_val},
 		{"SPEICHERSOLLTEMP", 0x0003, et_dec_val},

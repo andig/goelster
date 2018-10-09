@@ -59,7 +59,7 @@ func Payload(data []byte) (reg uint16, payload []byte) {
 func Reading(register uint16) *ElsterReading {
 	for _, r := range ElsterReadings {
 		if r.Index == register {
-			return &r
+			return r
 		}
 	}
 	return nil
@@ -170,7 +170,7 @@ func EncodeReceiver(b []byte, receiverId uint16, requestType byte) {
 	b[1] = byte(receiverId) & 0x0F
 }
 
-func RequestFrame(receiverId uint16, reading ElsterReading) []byte {
+func RequestFrame(receiverId uint16, reading *ElsterReading) []byte {
 	b := make([]byte, 8)
 
 	EncodeReceiver(b, receiverId, Request)
@@ -179,7 +179,7 @@ func RequestFrame(receiverId uint16, reading ElsterReading) []byte {
 	return b
 }
 
-func DataFrame(receiverId uint16, val interface{}, reading ElsterReading) []byte {
+func DataFrame(receiverId uint16, val interface{}, reading *ElsterReading) []byte {
 	b := make([]byte, 8)
 
 	EncodeReceiver(b, receiverId, Data)
