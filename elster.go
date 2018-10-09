@@ -11,6 +11,8 @@ import (
    Elster frame decoding
    ---------------------
 
+   https://www.haustechnikdialog.de/Forum/t/169910/ComfortSoft-mit-CAN-BUS-Anbindung-Raspberry-Pi-verwenden?page=7
+
    06 80  05  31 00  fa  09 31
    01 80  07  d2 00  fa  09 31  00 27
    06 80  05  31 00  fa  09 30

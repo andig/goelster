@@ -15,17 +15,17 @@ Go can be downloaded from [golang.org/dl/](https://golang.org/dl/). For Raspbian
 
 Listening on the CAN bus is similar to the `can_logger` tool from the `can_progs` package. Listing possible with the following command:
 
-    goelster  <can dev>
+    goelster <can dev>
 
 ## Scanning a device
 
 For scanning, `goelster` will try to read every single elster register. For details on all defined readings see Elster reading definitions source [github](https://github.com/andig/goelster/blob/master/readings.go):
 
-    goelster  <can dev> <sender can id>
+    goelster <can dev> <sender can id>
 
 ## Reading a device register
 
-    goelster  <can dev> <sender can id>.<receiver can id>
+    goelster <can dev> <sender can id>.<receiver can id>
 
 The value will be decoded as defined in the [Elster reading definitions](https://github.com/andig/goelster/blob/master/readings.go).
 
@@ -33,7 +33,7 @@ The value will be decoded as defined in the [Elster reading definitions](https:/
 
 Writing supports two modes. For compatibility with `can_scan` it is possible to write **raw binary** values:
 
-    goelster  <can dev> <sender can id>.<receiver can id>.<raw value>
+    goelster <can dev> <sender can id>.<receiver can id>.<raw value>
 
 Example: set `EINSTELL_SPEICHERSOLLTEMP2` to 42°C
 
@@ -41,7 +41,7 @@ Example: set `EINSTELL_SPEICHERSOLLTEMP2` to 42°C
 
 It is also possible to specify numeric values:
 
-    goelster  <can dev> <sender can id>.<receiver can id> <value>
+    goelster <can dev> <sender can id>.<receiver can id> <value>
 
 Example: set `EINSTELL_SPEICHERSOLLTEMP2` to 42°C
 

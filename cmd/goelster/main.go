@@ -65,7 +65,7 @@ EXAMPLES:
 	scan device:     goelster slcan0 680 180
 	read register:   goelster slcan0 680 180.0013
 	write register:  goelster slcan0 680 180.0013.01a4
-	numeric write:   goelster slcan0 680 180.0013 42.1
+	numeric write:   goelster slcan0 680 180.0013 42.1 (NOT IMPLEMENTED YET)
 {{if .Copyright}}
 COPYRIGHT:
    {{.Copyright}}{{end}}
