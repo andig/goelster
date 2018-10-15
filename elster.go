@@ -42,7 +42,7 @@ const (
 )
 
 func ReceiverId(b []byte) uint16 {
-	return uint16(b[0]&0xF0)<<3 + uint16(b[1]&0x0F)
+	return uint16(b[0]&0xF0)<<3 + uint16(b[1]&0x1F)
 }
 
 func Payload(data []byte) (reg uint16, payload []byte) {
@@ -167,7 +167,7 @@ func EncodeRegister(b []byte, register uint16) int {
 
 func EncodeReceiver(b []byte, receiverId uint16, requestType byte) {
 	b[0] = byte(receiverId>>3)&0xF0 | requestType
-	b[1] = byte(receiverId) & 0x0F
+	b[1] = byte(receiverId) & 0x1F
 }
 
 func RequestFrame(receiverId uint16, reading *ElsterReading) []byte {

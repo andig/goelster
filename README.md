@@ -37,7 +37,7 @@ Writing supports two modes. For compatibility with `can_scan` it is possible to 
 
 Example: set `EINSTELL_SPEICHERSOLLTEMP2` to 42°C
 
-    goelster slcan0 680.180.0a06.01a4
+    goelster slcan0 680 180.0a06.01a4
 
 It is also possible to specify numeric values:
 
@@ -45,6 +45,6 @@ It is also possible to specify numeric values:
 
 Example: set `EINSTELL_SPEICHERSOLLTEMP2` to 42°C
 
-    goelster slcan0 680.180.0a06 42
+    goelster slcan0 680 180.0a06 42
 
 The value will be encoded as defined in the [Elster reading definitions](https://github.com/andig/goelster/blob/master/readings.go).
